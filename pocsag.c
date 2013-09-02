@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern int store_message (int sql_address, int sql_function, char *sql_message);
+
 /* ---------------------------------------------------------------------- */
 
 //#define CHARSET_LATIN1
@@ -290,6 +292,7 @@ static void print_msg_alpha(struct l2_pocsag_rx *rx)
     }
     *cp = '\0';
     verbprintf(-3, "%s\n", buf);
+    store_message (rx->adr, rx->func, buf);
 }
 
 /* ---------------------------------------------------------------------- */

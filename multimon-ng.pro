@@ -49,7 +49,8 @@ SOURCES += \
     costabf.c \
     clip.c \
     demod_eas.c \
-    demod_morse.c
+    demod_morse.c \
+    sqlite.c
 
 macx{
 DEFINES += DUMMY_AUDIO
@@ -94,7 +95,7 @@ SOURCES +=  xdisplay.c \
 unix:linux-g++:!symbian:!macx{
 DEFINES += PULSE_AUDIO
 DEFINES += CHARSET_UTF8
-LIBS += -lX11 -lpulse-simple -lpulse
+LIBS += -lX11 -lpulse-simple -lpulse -lsqlite3
 SOURCES +=  xdisplay.c \
             demod_display.c
 }
