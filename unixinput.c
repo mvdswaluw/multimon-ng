@@ -89,6 +89,8 @@ extern int cw_gap_length;
 extern int cw_threshold;
 extern bool cw_disable_auto_threshold;
 extern bool cw_disable_auto_timing;
+extern bool dump_to_database;
+extern char pocsag_database[];
 
 void quit(void);
 
@@ -519,6 +521,7 @@ static const char usage_str[] = "\n"
         "  -q         : quiet\n"
         "  -v <level> : level of verbosity (for example '-v 10')\n"
         "  -f <mode>  : forces POCSAG data decoding as <mode> (<mode> can be 'numeric', 'alpha' and 'skyper')\n"
+        "  -D <file>  : Dump POCSAG messages to sqlite3 database\n"
         "  -h         : this help\n"
         "  -A         : APRS mode (TNC2 text output)\n"
         "  -m         : mute SoX warnings\n"
@@ -551,7 +554,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < NUMDEMOD; i++)
         fprintf(stderr, " %s", dem[i]->name);
     fprintf(stderr, "\n");
-    while ((c = getopt(argc, argv, "t:a:s:v:f:g:d:o:cqhAmrxyn")) != EOF) {
+    while ((c = getopt(argc, argv, "t:a:s:v:f:g:d:o:D:cqhAmrxyn")) != EOF) {
         switch (c) {
         case 'h':
         case '?':
@@ -649,7 +652,7 @@ intypefound:
                     pocsag_mode = POCSAG_MODE_SKYPER;
             }else fprintf(stderr, "a POCSAG mode has already been selected!\n");
             break;
-            
+
         case 'n':
             dont_flush = true;
             break;
@@ -661,6 +664,11 @@ intypefound:
             if(i) cw_dit_length = abs(i);
             break;
         }
+	
+	case 'D':
+	    dump_to_database = true;
+ 	    strcpy(pocsag_database, optarg);
+	    break;
             
         case 'g':
         {
@@ -693,7 +701,8 @@ intypefound:
     }
     if (mask_first)
         memset(dem_mask, 0xff, sizeof(dem_mask));
-    
+    if (dump_to_database)
+	fprintf(stdout, "Writing POCSAG messages to %s\n", pocsag_database); 
     if (!quietflg)
         fprintf(stdout, "Enabled demodulators:");
     for (i = 0; i < NUMDEMOD; i++)

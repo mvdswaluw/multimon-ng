@@ -6,6 +6,8 @@
 
 //TODO Error handling, store mode used (ie POCSAG1200)
 
+char pocsag_database[] = "";
+
 int store_message (int sql_address, int sql_function, char *sql_message)
 {
 	int error = 0;
@@ -23,7 +25,7 @@ int store_message (int sql_address, int sql_function, char *sql_message)
 	sqlite3_stmt *insert_stmt = NULL;
 
 	//Open database, will create if not existing
-	error = sqlite3_open  ("pocsag.db", &message_db);
+	error = sqlite3_open  (pocsag_database, &message_db);
 	if (error)
 	{
 		printf ("There was a problem creating/opening the message database \n");

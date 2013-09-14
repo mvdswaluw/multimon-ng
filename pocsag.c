@@ -68,6 +68,7 @@ uint32_t pocsag_uncorrected_error_count = 0;
 uint32_t pocsag_total_bits_received = 0;
 uint32_t pocsag_bits_processed_while_synced = 0;
 uint32_t pocsag_bits_processed_while_not_synced = 0;
+bool dump_to_database = false;
 
 /* ---------------------------------------------------------------------- */
 
@@ -154,6 +155,8 @@ static void print_msg_numeric(struct l2_pocsag_rx *rx)
     }
     *cp = '\0';
     verbprintf(-3, "%s\n", buf);
+    if (dump_to_database == true)
+    	store_message (rx->adr, rx->func, buf);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -292,7 +295,8 @@ static void print_msg_alpha(struct l2_pocsag_rx *rx)
     }
     *cp = '\0';
     verbprintf(-3, "%s\n", buf);
-    store_message (rx->adr, rx->func, buf);
+    if (dump_to_database == true)
+    	store_message (rx->adr, rx->func, buf);
 }
 
 /* ---------------------------------------------------------------------- */
