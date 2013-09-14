@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern int store_message (int sql_address, int sql_function, char *sql_message);
+extern int store_message (int sql_address, int sql_function, char *sql_message, char *sql_speed);
 
 /* ---------------------------------------------------------------------- */
 
@@ -69,6 +69,7 @@ uint32_t pocsag_total_bits_received = 0;
 uint32_t pocsag_bits_processed_while_synced = 0;
 uint32_t pocsag_bits_processed_while_not_synced = 0;
 bool dump_to_database = false;
+char pocsag_speed[12] = "";
 
 /* ---------------------------------------------------------------------- */
 
@@ -156,7 +157,7 @@ static void print_msg_numeric(struct l2_pocsag_rx *rx)
     *cp = '\0';
     verbprintf(-3, "%s\n", buf);
     if (dump_to_database == true)
-    	store_message (rx->adr, rx->func, buf);
+    	store_message (rx->adr, rx->func, buf, pocsag_speed);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -296,7 +297,7 @@ static void print_msg_alpha(struct l2_pocsag_rx *rx)
     *cp = '\0';
     verbprintf(-3, "%s\n", buf);
     if (dump_to_database == true)
-    	store_message (rx->adr, rx->func, buf);
+    	store_message (rx->adr, rx->func, buf, pocsag_speed);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -353,6 +354,7 @@ static void print_msg_skyper(struct l2_pocsag_rx *rx)
 static void pocsag_printmessage(struct demod_state *s, struct l2_pocsag_rx *rx,
                                 const char *add_name)
 {
+    strcpy (pocsag_speed, s->dem_par->name);
     verbprintf(-2, "%s%s: Address: %7lu  Function: %1u\n",
                s->dem_par->name, add_name, rx->adr, rx->func);
     if (!rx->numnibbles)

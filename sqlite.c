@@ -4,11 +4,11 @@
 #include <sqlite3.h>
 
 
-//TODO Error handling, store mode used (ie POCSAG1200)
+//TODO Error handling
 
 char pocsag_database[] = "";
 
-int store_message (int sql_address, int sql_function, char *sql_message)
+int store_message (int sql_address, int sql_function, char *sql_message, char *sql_speed)
 {
 	int error = 0;
 	int timestamp;
@@ -17,11 +17,12 @@ int store_message (int sql_address, int sql_function, char *sql_message)
 		"address INTEGER, " 
 		"function INTEGER, "
 		"message TEXT, "
+		"speed TEXT, "
 		"timestamp INTEGER"
 		")";
 	const char insert_message[] = "INSERT INTO messages"
-		"(address, function, message, timestamp)"
-		"VALUES (?,?,?,?)";
+		"(address, function, message, speed, timestamp)"
+		"VALUES (?,?,?,?,?)";
 	sqlite3_stmt *insert_stmt = NULL;
 
 	//Open database, will create if not existing
@@ -41,7 +42,8 @@ int store_message (int sql_address, int sql_function, char *sql_message)
 	error = sqlite3_bind_int (insert_stmt, 1, sql_address);
 	error = sqlite3_bind_int (insert_stmt, 2, sql_function);
 	error = sqlite3_bind_text (insert_stmt, 3, sql_message, strlen(sql_message), NULL);
-	error = sqlite3_bind_int64 (insert_stmt, 4, timestamp);
+	error = sqlite3_bind_text (insert_stmt, 4, sql_speed, strlen(sql_speed), NULL);
+	error = sqlite3_bind_int64 (insert_stmt, 5, timestamp);
 	//Store
 	error = sqlite3_step (insert_stmt);
 	//Close DB
