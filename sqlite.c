@@ -8,7 +8,7 @@
 
 char pocsag_database[] = "";
 
-int store_message (int sql_address, int sql_function, char *sql_message, char *sql_speed)
+int store_message (int sql_address, int sql_function, char *sql_message, char *sql_baud)
 {
 	int error = 0;
 	int timestamp;
@@ -17,11 +17,11 @@ int store_message (int sql_address, int sql_function, char *sql_message, char *s
 		"address INTEGER, " 
 		"function INTEGER, "
 		"message TEXT, "
-		"speed TEXT, "
+		"baud TEXT, "
 		"timestamp INTEGER"
 		")";
 	const char insert_message[] = "INSERT INTO messages"
-		"(address, function, message, speed, timestamp)"
+		"(address, function, message, baud, timestamp)"
 		"VALUES (?,?,?,?,?)";
 	sqlite3_stmt *insert_stmt = NULL;
 
@@ -42,7 +42,7 @@ int store_message (int sql_address, int sql_function, char *sql_message, char *s
 	error = sqlite3_bind_int (insert_stmt, 1, sql_address);
 	error = sqlite3_bind_int (insert_stmt, 2, sql_function);
 	error = sqlite3_bind_text (insert_stmt, 3, sql_message, strlen(sql_message), NULL);
-	error = sqlite3_bind_text (insert_stmt, 4, sql_speed, strlen(sql_speed), NULL);
+	error = sqlite3_bind_text (insert_stmt, 4, sql_baud, strlen(sql_baud), NULL);
 	error = sqlite3_bind_int64 (insert_stmt, 5, timestamp);
 	//Store
 	error = sqlite3_step (insert_stmt);
