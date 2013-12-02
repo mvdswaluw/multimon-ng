@@ -293,6 +293,17 @@ extern const struct demod_param demod_scope;
     &demod_pzvei, &demod_eea, &demod_eia, &demod_ccir, &demod_morse SCOPE_DEMOD
 
 
+#ifdef SQLITE
+int store_message (int sql_address, int sql_function, char *sql_message, char *sql_baud);
+#endif
+
+#ifdef IRCBOT
+extern int ircbot_init (void);
+extern void ircbot_shutdown (void);
+extern void irc_print_msg (int address, char *message);
+extern bool start_ircbot;
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 void _verbprintf(int verb_level, const char *fmt, ...);

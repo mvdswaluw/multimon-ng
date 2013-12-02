@@ -2,7 +2,7 @@ TEMPLATE = app
 CONFIG += console
 CONFIG -= qt
 CONFIG -= app_bundle
-DEFINES += MAX_VERBOSE_LEVEL=1
+DEFINES += MAX_VERBOSE_LEVEL=10
 QMAKE_CFLAGS += -std=gnu99
 QMAKE_CFLAGS += -g # For profiling
 
@@ -49,8 +49,7 @@ SOURCES += \
     costabf.c \
     clip.c \
     demod_eas.c \
-    demod_morse.c \
-    sqlite.c
+    demod_morse.c
 
 macx{
 DEFINES += DUMMY_AUDIO
@@ -80,7 +79,8 @@ DEFINES += PULSE_AUDIO
 DEFINES += CHARSET_UTF8
 LIBS += -lX11 -lpulse-simple -lpulse
 SOURCES +=  xdisplay.c \
-            demod_display.c
+            demod_display.c \
+	    
 }
 
 unix:linux-g++-64:!symbian:!macx{
@@ -95,7 +95,11 @@ SOURCES +=  xdisplay.c \
 unix:linux-g++:!symbian:!macx{
 DEFINES += PULSE_AUDIO
 DEFINES += CHARSET_UTF8
-LIBS += -lX11 -lpulse-simple -lpulse -lsqlite3
+DEFINES += SQLITE
+DEFINES += IRCBOT
+LIBS += -lX11 -lpulse-simple -lpulse -lsqlite3 -lircclient
 SOURCES +=  xdisplay.c \
-            demod_display.c
+            demod_display.c \
+	    sqlite.c \
+	    ircbot.c
 }

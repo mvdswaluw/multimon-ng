@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern int store_message (int sql_address, int sql_function, char *sql_message, char *sql_baud);
 
 /* ---------------------------------------------------------------------- */
 
@@ -156,8 +155,10 @@ static void print_msg_numeric(struct l2_pocsag_rx *rx)
     }
     *cp = '\0';
     verbprintf(-3, "%s\n", buf);
+#ifdef SQLITE
     if (dump_to_database == true)
     	store_message (rx->adr, rx->func, buf, pocsag_baud);
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -296,8 +297,14 @@ static void print_msg_alpha(struct l2_pocsag_rx *rx)
     }
     *cp = '\0';
     verbprintf(-3, "%s\n", buf);
+#ifdef SQLITE
     if (dump_to_database == true)
     	store_message (rx->adr, rx->func, buf, pocsag_baud);
+#endif
+#ifdef IRCBOT
+    if (start_ircbot)
+	    irc_print_msg (rx->adr, buf);
+#endif
 }
 
 /* ---------------------------------------------------------------------- */

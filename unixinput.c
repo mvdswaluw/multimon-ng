@@ -89,8 +89,14 @@ extern int cw_gap_length;
 extern int cw_threshold;
 extern bool cw_disable_auto_threshold;
 extern bool cw_disable_auto_timing;
+#ifdef SQLITE
 extern bool dump_to_database;
 extern char pocsag_database[];
+#endif
+
+#ifdef IRCBOT
+bool start_ircbot = false;
+#endif
 
 void quit(void);
 
@@ -506,6 +512,9 @@ void quit(void)
             if (dem[i]->deinit)
                 dem[i]->deinit(dem_st+i);
     }
+#ifdef IRCBOT
+	ircbot_shutdown ();
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -521,7 +530,13 @@ static const char usage_str[] = "\n"
         "  -q         : quiet\n"
         "  -v <level> : level of verbosity (for example '-v 10')\n"
         "  -f <mode>  : forces POCSAG data decoding as <mode> (<mode> can be 'numeric', 'alpha' and 'skyper')\n"
+#ifdef SQLITE
         "  -D <file>  : Dump POCSAG messages to sqlite3 database\n"
+#endif
+#ifdef IRCBOT
+        "  -i         : Start IRC bot\n"
+#endif
+
         "  -h         : this help\n"
         "  -A         : APRS mode (TNC2 text output)\n"
         "  -m         : mute SoX warnings\n"
@@ -554,7 +569,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < NUMDEMOD; i++)
         fprintf(stderr, " %s", dem[i]->name);
     fprintf(stderr, "\n");
-    while ((c = getopt(argc, argv, "t:a:s:v:f:g:d:o:D:cqhAmrxyn")) != EOF) {
+    while ((c = getopt(argc, argv, "t:a:s:v:f:g:d:o:D:icqhAmrxyn")) != EOF) {
         switch (c) {
         case 'h':
         case '?':
@@ -664,13 +679,18 @@ intypefound:
             if(i) cw_dit_length = abs(i);
             break;
         }
-	
+#ifdef SQLITE	
 	case 'D':
 	    dump_to_database = true;
  	    strcpy(pocsag_database, optarg);
 	    break;
-            
-        case 'g':
+#endif
+#ifdef IRCBOT
+	case 'i':
+	    start_ircbot = true;
+	    break;
+#endif
+	case 'g':
         {
             int i = 0;
             sscanf(optarg, "%d", &i);
@@ -747,7 +767,10 @@ intypefound:
         (void)fprintf(stderr, "no source files specified\n");
         exit(4);
     }
-    
+#ifdef IRCBOT   	
+    if (start_ircbot)
+	    ircbot_init ();
+#endif
     for (i = optind; i < argc; i++)
         input_file(sample_rate, overlap, argv[i], input_type);
     
