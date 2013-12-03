@@ -1,3 +1,4 @@
+#include "multimon.h"
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
@@ -5,8 +6,6 @@
 
 
 //TODO Error handling
-
-char pocsag_database[] = "";
 
 int store_message (int sql_address, int sql_function, char *sql_message, char *sql_baud)
 {
@@ -24,7 +23,7 @@ int store_message (int sql_address, int sql_function, char *sql_message, char *s
 		"(address, function, message, baud, timestamp)"
 		"VALUES (?,?,?,?,?)";
 	sqlite3_stmt *insert_stmt = NULL;
-
+	
 	//Open database, will create if not existing
 	error = sqlite3_open  (pocsag_database, &message_db);
 	if (error)

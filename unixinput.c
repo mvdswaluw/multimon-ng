@@ -89,15 +89,9 @@ extern int cw_gap_length;
 extern int cw_threshold;
 extern bool cw_disable_auto_threshold;
 extern bool cw_disable_auto_timing;
-#ifdef SQLITE
-extern bool dump_to_database;
-extern char pocsag_database[];
-#endif
 
-#ifdef IRCBOT
 bool start_ircbot = false;
-#endif
-
+bool dump_to_database = false;
 void quit(void);
 
 /* ---------------------------------------------------------------------- */
@@ -681,8 +675,15 @@ intypefound:
         }
 #ifdef SQLITE	
 	case 'D':
-	    dump_to_database = true;
- 	    strcpy(pocsag_database, optarg);
+	    if (strcmp (optarg, "") == 0)
+	    {
+		fprintf (stderr, "-D option but no database file specified\n");
+	    }
+	    else
+	    {
+	    	dump_to_database = true;
+ 	    	strcpy(pocsag_database, optarg);
+	    }
 	    break;
 #endif
 #ifdef IRCBOT
