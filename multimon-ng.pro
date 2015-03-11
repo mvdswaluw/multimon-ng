@@ -2,7 +2,7 @@ TEMPLATE = app
 CONFIG += console
 CONFIG -= qt
 CONFIG -= app_bundle
-DEFINES += MAX_VERBOSE_LEVEL=10
+DEFINES += MAX_VERBOSE_LEVEL=3
 QMAKE_CFLAGS += -std=gnu99
 QMAKE_CFLAGS += -g # For profiling
 
@@ -41,6 +41,7 @@ SOURCES += \
     demod_fsk96.c \
     demod_dtmf.c \
     demod_clipfsk.c \
+    demod_fmsfsk.c \
     demod_afsk24.c \
     demod_afsk24_3.c \
     demod_afsk24_2.c \
@@ -48,8 +49,11 @@ SOURCES += \
     costabi.c \
     costabf.c \
     clip.c \
+    fms.c \
     demod_eas.c \
-    demod_morse.c
+    demod_morse.c \
+    demod_dumpcsv.c
+
 
 macx{
 DEFINES += DUMMY_AUDIO
@@ -72,6 +76,14 @@ LIBS += -lwinmm
 #DEFINES += ARCH_I386
 }
 
+unix:freebsd-g++:!symbian:!macx{
+#DEFINES += ARCH_I386
+DEFINES += PULSE_AUDIO
+DEFINES += CHARSET_UTF8
+LIBS += -L/usr/local/lib -LX11 -lpulse-simple -lpulse
+SOURCES +=  xdisplay.c \
+            demod_display.c
+}
 
 unix:linux-g++-32:!symbian:!macx{
 #DEFINES += ARCH_I386

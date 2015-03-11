@@ -1,4 +1,4 @@
-﻿/*-----------------------------------------------------------------------
+/*-----------------------------------------------------------------------
  *
  *      demod_morse.c -- Morse/CW decoder
  *
@@ -18,8 +18,8 @@
 #define GAIN 1
 #define SQUELCH 500
 #define HOLDOFF_MS 10               // Compensate for ringing
-#define AUTO_TRESHOLD_MULT 2/3
-//#define AUTO_TRESHOLD_MULT 1/2
+#define AUTO_THRESHOLD_MULT 2/3
+//#define AUTO_THRESHOLD_MULT 1/2
 
 #define DEBUG 0
 #define SHOW_FAILED_DECODES 1
@@ -204,14 +204,14 @@ static inline void auto_threshold(struct demod_state * restrict const s)
     if(!s->l1.morse.threshold_ctr && s->l1.morse.signal_max > 0)
     {
         s->l1.morse.signal_max = s->l1.morse.signal_max * 999 / 1000;
-        s->l1.morse.detection_threshold = s->l1.morse.signal_max*AUTO_TRESHOLD_MULT;
+        s->l1.morse.detection_threshold = s->l1.morse.signal_max*AUTO_THRESHOLD_MULT;
     }
     
     // Check for a higher upper limit
     if(s->l1.morse.filtered > s->l1.morse.signal_max)
     {
         s->l1.morse.signal_max = s->l1.morse.filtered;
-        s->l1.morse.detection_threshold = s->l1.morse.signal_max*AUTO_TRESHOLD_MULT;
+        s->l1.morse.detection_threshold = s->l1.morse.signal_max*AUTO_THRESHOLD_MULT;
     }
     
     // Prevent threshold from dropping below SQUELCH
@@ -246,6 +246,7 @@ static void morse_demod(struct demod_state * restrict const s,
     for(int i = 0; i < length; i++)
     {
         // A low-pass is nice, though we could add a high-pass in order to get a band-pass :)
+        // abs() when combined with the low-pass works as a peak detector
         s->l1.morse.filtered = low_pass(s->l1.morse.filtered, (int_fast32_t)abs(buffer.sbuffer[i]) * GAIN,
                                        s->l1.morse.lowpass_strength);
         

@@ -4,8 +4,8 @@
  *      Copyright (C) 1996
  *          Thomas Sailer (sailer@ife.ee.ethz.ch, hb9jnx@hb9w.che.eu)
  *
- *      Copyright (C) 2012
- *          Elias Oenal    (EliasOenal@gmail.com)
+ *      Copyright (C) 2012-2014
+ *          Elias Oenal    (multimon-ng@eliasoenal.com)
  *
  *      This program is free software; you can redistribute it and/or modify
  *      it under the terms of the GNU General Public License as published by
@@ -54,11 +54,15 @@
 //#include <sys/wait.h>
 #endif /* SUN_AUDIO */
 
+#ifndef ONLY_RAW
+#include <sys/wait.h>
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 static const char *allowed_types[] = {
     "raw", "aiff", "au", "hcom", "sf", "voc", "cdr", "dat",
-    "smp", "wav", "maud", "vwe", "mp3", "mp4", "ogg", NULL
+    "smp", "wav", "maud", "vwe", "mp3", "mp4", "ogg", "flac", NULL
 };
 
 /* ---------------------------------------------------------------------- */
@@ -83,6 +87,12 @@ static int integer_only = true;
 static bool dont_flush = false;
 
 extern int pocsag_mode;
+extern int pocsag_invert_input;
+extern int pocsag_error_correction;
+extern int pocsag_show_partial_decodes;
+extern int pocsag_heuristic_pruning;
+extern int pocsag_prune_empty;
+
 extern int aprs_mode;
 extern int cw_dit_length;
 extern int cw_gap_length;
@@ -98,10 +108,11 @@ void quit(void);
 
 void _verbprintf(int verb_level, const char *fmt, ...)
 {
+    if (verb_level > verbose_level)
+        return;
     va_list args;
-    
     va_start(args, fmt);
-    if (verb_level <= verbose_level) {
+    {
         vfprintf(stdout, fmt, args);
         if(!dont_flush)
             fflush(stdout);
@@ -113,7 +124,7 @@ void _verbprintf(int verb_level, const char *fmt, ...)
 
 void process_buffer(float *float_buf, short *short_buf, unsigned int len)
 {
-    for (int i = 0; i <  NUMDEMOD; i++)
+    for (int i = 0; (unsigned int) i <  NUMDEMOD; i++)
         if (MASK_ISSET(i) && dem[i]->demod)
         {
             buffer_t buffer = {short_buf, float_buf};
@@ -178,7 +189,9 @@ static void input_sound(unsigned int sample_rate, unsigned int overlap,
             break;
         if (i > 0) {
             if(integer_only)
+        {
                 fbuf_cnt = i/sizeof(buffer[0]);
+        }
             else
             {
                 for (; i >= sizeof(buffer[0]); i -= sizeof(buffer[0]), sp++)
@@ -217,6 +230,9 @@ static void input_sound(unsigned int sample_rate, unsigned int overlap,
     int i;
     int error;
     short *sp;
+
+    (void) ifname;  // Suppress the warning.
+
     
     // Init stuff from pa.org
     pa_simple *s;
@@ -246,10 +262,12 @@ static void input_sound(unsigned int sample_rate, unsigned int overlap,
         
         if (i > 0) {
             if(integer_only)
+        {
                 fbuf_cnt = i/sizeof(buffer[0]);
+        }
             else
             {
-                for (; i >= sizeof(buffer[0]); i -= sizeof(buffer[0]), sp++)
+                for (; (unsigned int) i >= sizeof(buffer[0]); i -= sizeof(buffer[0]), sp++)
                     fbuf[fbuf_cnt++] = (*sp) * (1.0/32768.0);
                 if (i)
                     fprintf(stderr, "warning: noninteger number of samples read\n");
@@ -368,7 +386,9 @@ static void input_sound(unsigned int sample_rate, unsigned int overlap,
                 break;
             if (i > 0) {
                 if(integer_only)
-                    fbuf_cnt = i/sizeof(buffer[0]);
+        {
+                    fbuf_cnt = i/sizeof(b.s[0]);
+        }
                 else
                 {
                     for (; i >= sizeof(b.s[0]); i -= sizeof(b.s[0]), sp++)
@@ -475,10 +495,12 @@ static void input_file(unsigned int sample_rate, unsigned int overlap,
             break;
         if (i > 0) {
             if(integer_only)
+        {
                 fbuf_cnt = i/sizeof(buffer[0]);
+        }
             else
             {
-                for (; i >= sizeof(buffer[0]); i -= sizeof(buffer[0]), sp++)
+                for (; (unsigned int) i >= sizeof(buffer[0]); i -= sizeof(buffer[0]), sp++)
                     fbuf[fbuf_cnt++] = (*sp) * (1.0f/32768.0f);
                 if (i)
                     fprintf(stderr, "warning: noninteger number of samples read\n");
@@ -500,7 +522,7 @@ static void input_file(unsigned int sample_rate, unsigned int overlap,
 void quit(void)
 {
     int i = 0;
-    for (i = 0; i < NUMDEMOD; i++)
+    for (i = 0; (unsigned int) i < NUMDEMOD; i++)
     {
         if(MASK_ISSET(i))
             if (dem[i]->deinit)
@@ -517,6 +539,7 @@ static const char usage_str[] = "\n"
         "Usage: %s [file] [file] [file] ...\n"
         "  If no [file] is given, input will be read from your default sound\n"
         "  hardware. A filename of \"-\" denotes standard input.\n"
+<<<<<<< HEAD
         "  -t <type>  : input file type (any other type than raw requires sox)\n"
         "  -a <demod> : add demodulator\n"
         "  -s <demod> : subtract demodulator\n"
@@ -532,15 +555,33 @@ static const char usage_str[] = "\n"
 #endif
 
         "  -h         : this help\n"
+=======
+        "  -t <type>  : Input file type (any other type than raw requires sox)\n"
+        "  -a <demod> : Add demodulator\n"
+        "  -s <demod> : Subtract demodulator\n"
+        "  -c         : Remove all demodulators (must be added with -a <demod>)\n"
+        "  -q         : Quiet\n"
+        "  -v <level> : Level of verbosity (e.g. '-v 3')\n"
+        "               For POCSAG and MORSE_CW '-v1' prints decoding statistics.\n"
+        "  -h         : This help\n"
+>>>>>>> upstream/master
         "  -A         : APRS mode (TNC2 text output)\n"
-        "  -m         : mute SoX warnings\n"
-        "  -r         : call SoX in repeatable mode (e.g. fixed random seed for dithering)\n"
-        "  -n         : don't flush stdout, increases performance\n"
-        "  -o         : CW: set threshold for dit detection (default: 500)\n"
-        "  -d         : CW: dit length in ms (default: 50)\n"
-        "  -g         : CW: gap length in ms (default: 50)\n"
-        "  -x         : CW: disable auto treshold detection\n"
-        "  -y         : CW: disable auto timing detection\n"
+        "  -m         : Mute SoX warnings\n"
+        "  -r         : Call SoX in repeatable mode (e.g. fixed random seed for dithering)\n"
+        "  -n         : Don't flush stdout, increases performance.\n"
+        "  -e         : POCSAG: Hide empty messages.\n"
+        "  -u         : POCSAG: Heuristically prune unlikely decodes.\n"
+        "  -i         : POCSAG: Inverts the input samples. Try this if decoding fails.\n"
+        "  -p         : POCSAG: Show partially received messages.\n"
+        "  -f <mode>  : POCSAG: Disables auto-detection and forces decoding of data as <mode>\n"
+        "                       (<mode> can be 'numeric', 'alpha' and 'skyper')\n"
+        "  -b <level> : POCSAG: BCH bit error correction level. Set 0 to disable, default is 2.\n"
+        "                       Lower levels increase performance and lower false positives.\n"
+        "  -o         : CW: Set threshold for dit detection (default: 500)\n"
+        "  -d         : CW: Dit length in ms (default: 50)\n"
+        "  -g         : CW: Gap length in ms (default: 50)\n"
+        "  -x         : CW: Disable auto threshold detection\n"
+        "  -y         : CW: Disable auto timing detection\n"
         "   Raw input requires one channel, 16 bit, signed integer (platform-native)\n"
         "   samples at the demodulator's input sampling rate, which is\n"
         "   usually 22050 Hz. Raw input is assumed and required if piped input is used.\n";
@@ -556,6 +597,7 @@ int main(int argc, char *argv[])
     int sample_rate = -1;
     unsigned int overlap = 0;
     char *input_type = "hw";
+<<<<<<< HEAD
     
     fprintf(stderr, "multimon-ng  (C) 1996/1997 by Tom Sailer HB9JNX/AE4WA\n"
             "             (C) 2012/2013 by Elias Oenal\n"
@@ -564,6 +606,10 @@ int main(int argc, char *argv[])
         fprintf(stderr, " %s", dem[i]->name);
     fprintf(stderr, "\n");
     while ((c = getopt(argc, argv, "t:a:s:v:f:g:d:o:D:icqhAmrxyn")) != EOF) {
+=======
+
+    while ((c = getopt(argc, argv, "t:a:s:v:b:f:g:d:o:cqhAmrxynipeu")) != EOF) {
+>>>>>>> upstream/master
         switch (c) {
         case 'h':
         case '?':
@@ -578,7 +624,7 @@ int main(int argc, char *argv[])
             aprs_mode = 1;
             memset(dem_mask, 0, sizeof(dem_mask));
             mask_first = 0;
-            for (i = 0; i < NUMDEMOD; i++)
+            for (i = 0; (unsigned int) i < NUMDEMOD; i++)
                 if (!strcasecmp("AFSK1200", dem[i]->name)) {
                     MASK_SET(i);
                     break;
@@ -587,6 +633,27 @@ int main(int argc, char *argv[])
             
         case 'v':
             verbose_level = strtoul(optarg, 0, 0);
+            break;
+
+        case 'b':
+            pocsag_error_correction = strtoul(optarg, 0, 0);
+            if(pocsag_error_correction > 2 || pocsag_error_correction < 0)
+            {
+                fprintf(stderr, "Invalid error correction value!\n");
+                pocsag_error_correction = 2;
+            }
+            break;
+
+        case'p':
+            pocsag_show_partial_decodes = 1;
+            break;
+
+        case'u':
+            pocsag_heuristic_pruning = 1;
+            break;
+
+        case'e':
+            pocsag_prune_empty = 1;
             break;
             
         case 'm':
@@ -616,12 +683,12 @@ intypefound:
             if (mask_first)
                 memset(dem_mask, 0, sizeof(dem_mask));
             mask_first = 0;
-            for (i = 0; i < NUMDEMOD; i++)
+            for (i = 0; (unsigned int) i < NUMDEMOD; i++)
                 if (!strcasecmp(optarg, dem[i]->name)) {
                     MASK_SET(i);
                     break;
                 }
-            if (i >= NUMDEMOD) {
+            if ((unsigned int) i >= NUMDEMOD) {
                 fprintf(stderr, "invalid mode \"%s\"\n", optarg);
                 errflg++;
             }
@@ -631,12 +698,12 @@ intypefound:
             if (mask_first)
                 memset(dem_mask, 0xff, sizeof(dem_mask));
             mask_first = 0;
-            for (i = 0; i < NUMDEMOD; i++)
+            for (i = 0; (unsigned int) i < NUMDEMOD; i++)
                 if (!strcasecmp(optarg, dem[i]->name)) {
                     MASK_RESET(i);
                     break;
                 }
-            if (i >= NUMDEMOD) {
+            if ((unsigned int) i >= NUMDEMOD) {
                 fprintf(stderr, "invalid mode \"%s\"\n", optarg);
                 errflg++;
             }
@@ -646,7 +713,7 @@ intypefound:
             if (mask_first)
                 memset(dem_mask, 0xff, sizeof(dem_mask));
             mask_first = 0;
-            for (i = 0; i < NUMDEMOD; i++)
+            for (i = 0; (unsigned int) i < NUMDEMOD; i++)
                 MASK_RESET(i);
             break;
             
@@ -664,6 +731,10 @@ intypefound:
 
         case 'n':
             dont_flush = true;
+            break;
+
+        case 'i':
+            pocsag_invert_input = true;
             break;
             
         case 'd':
@@ -716,6 +787,19 @@ intypefound:
             break;
         }
     }
+
+
+    if ( !quietflg )
+    { // pay heed to the quietflg
+    fprintf(stderr, "multimon-ng  (C) 1996/1997 by Tom Sailer HB9JNX/AE4WA\n"
+        "             (C) 2012-2014 by Elias Oenal\n"
+        "available demodulators:");
+    for (i = 0; (unsigned int) i < NUMDEMOD; i++) {
+        fprintf(stderr, " %s", dem[i]->name);
+    }
+    fprintf(stderr, "\n");
+    }
+
     if (errflg) {
         (void)fprintf(stderr, usage_str, argv[0]);
         exit(2);
@@ -726,7 +810,7 @@ intypefound:
 	fprintf(stdout, "Writing POCSAG messages to %s\n", pocsag_database); 
     if (!quietflg)
         fprintf(stdout, "Enabled demodulators:");
-    for (i = 0; i < NUMDEMOD; i++)
+    for (i = 0; (unsigned int) i < NUMDEMOD; i++)
         if (MASK_ISSET(i)) {
             if (!quietflg)
                 fprintf(stdout, " %s", dem[i]->name);       //Print demod name
@@ -737,7 +821,7 @@ intypefound:
                 dem[i]->init(dem_st+i);
             if (sample_rate == -1)
                 sample_rate = dem[i]->samplerate;
-            else if (sample_rate != dem[i]->samplerate) {
+            else if ( (unsigned int) sample_rate != dem[i]->samplerate) {
                 if (!quietflg)
                     fprintf(stdout, "\n");
                 fprintf(stderr, "Error: Current sampling rate %d, "
