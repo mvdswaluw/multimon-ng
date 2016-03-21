@@ -359,7 +359,8 @@ static void parse_alphanumeric(struct Flex * flex, unsigned int * phaseptr, char
 	} else {
 		frag = ( phaseptr[j+1] >> 11) & 0x03;
 		//	cont = ( phaseptr[j+1] >> 10) & 0x01;
-		mw2--;
+		mw1++;
+		//mw2--;
 	}
 
 	//d_payload << frag << FIELD_DELIM;
